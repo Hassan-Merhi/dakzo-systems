@@ -1,0 +1,8 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Dakzo Systems mark</title>
+  <desc id="desc">A geometric D formed by three connected technology blocks.</desc>
+  <rect width="64" height="64" rx="16" fill="#0B1020"/>
+  <path d="M18 16H31C42.598 16 52 25.402 52 37C52 48.598 42.598 58 31 58H18V16Z" fill="#F7F9FC"/>
+  <path d="M26 24H31C38.18 24 44 29.82 44 37C44 44.18 38.18 50 31 50H26V24Z" fill="#0B1020"/>
+  <circle cx="47" cy="17" r="5" fill="#63E6BE"/>
+</svg>

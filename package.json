@@ -1,0 +1,15 @@
+{
+  "name": "dakzo-systems",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Official website for Dakzo Systems, a Dakik LLC company.",
+  "scripts": {
+    "lint": "node scripts/lint.mjs",
+    "test": "node scripts/test.mjs",
+    "build": "node scripts/build.mjs",
+    "verify": "npm run lint && npm test && npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
