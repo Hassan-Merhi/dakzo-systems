@@ -21,6 +21,10 @@ This runs:
 4. Responsive/reduced-motion assertions
 5. Production build generation
 
+## CI gate
+
+GitHub Actions runs the same `npm run verify` suite on every push to `main` and on pull requests through `.github/workflows/verify.yml`.
+
 ## Wave 1 acceptance baseline
 
 - Seven public routes exist and resolve
