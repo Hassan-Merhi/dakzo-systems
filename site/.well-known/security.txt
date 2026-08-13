@@ -1,0 +1,5 @@
+Contact: mailto:security@dakzosystems.com
+Preferred-Languages: en
+Canonical: https://dakzosystems.com/.well-known/security.txt
+Policy: https://dakzosystems.com/privacy/
+Expires: 2027-08-12T23:59:59Z
