@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, stat, readdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm, stat, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
 const project = new URL('../', import.meta.url).pathname;
@@ -34,6 +34,27 @@ await writeFile(join(output, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap:
 
 const indexStat = await stat(join(output, 'index.html'));
 if (indexStat.size < 1000) throw new Error('Production homepage output is unexpectedly small.');
-if (urls.length < 10) throw new Error('Production sitemap has unexpectedly few routes.');
+if (urls.length < 15) throw new Error('Production sitemap has unexpectedly few routes.');
 
-console.log(`Build passed: ${urls.length} crawlable routes generated in dist/ for ${siteUrl}.`);
+const requiredProductionFiles = ['404.html', 'health.json', '.well-known/security.txt', 'privacy/index.html'];
+for (const path of requiredProductionFiles) await stat(join(output, path));
+
+const jsBudget = 8 * 1024;
+const cssBudget = 20 * 1024;
+const htmlBudget = 16 * 1024;
+const jsSize = (await stat(join(output, 'assets/site.js'))).size;
+const cssFiles = ['styles.css', 'wave3.css'];
+let cssSize = 0;
+for (const file of cssFiles) cssSize += (await stat(join(output, 'assets', file))).size;
+if (jsSize > jsBudget) throw new Error(`site.js exceeds ${jsBudget} byte production budget (${jsSize}).`);
+if (cssSize > cssBudget) throw new Error(`CSS exceeds ${cssBudget} byte production budget (${cssSize}).`);
+
+for (const file of pages) {
+  const html = await readFile(file, 'utf8');
+  const size = Buffer.byteLength(html);
+  if (size > htmlBudget) throw new Error(`${relative(output, file)} exceeds ${htmlBudget} byte HTML budget (${size}).`);
+  if (!html.includes('name="viewport"')) throw new Error(`${relative(output, file)} is missing a mobile viewport.`);
+  if (/src="https?:\/\//i.test(html)) throw new Error(`${relative(output, file)} contains a third-party executable script.`);
+}
+
+console.log(`Build passed: ${urls.length} crawlable routes generated for ${siteUrl}; JS ${jsSize} B; CSS ${cssSize} B; per-page HTML budget ${htmlBudget} B.`);
