@@ -1,3 +1,8 @@
+// Keep the primary navigation CTA readable against its dark pill background.
+document.querySelectorAll('.nav a.nav-cta').forEach((link) => {
+  if (link instanceof HTMLAnchorElement) link.style.color = '#ffffff';
+});
+
 const toggle = document.querySelector('[data-menu-toggle]');
 const nav = document.querySelector('[data-nav]');
 
