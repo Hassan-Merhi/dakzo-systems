@@ -17,8 +17,8 @@ const checks = [
  ['portfolio visuals', work.includes('/assets/work-hmd-erp.svg') && work.includes('/assets/work-congo-delivery.svg') && work.includes('/assets/work-moto-track.svg')],
  ['visual accessibility', work.includes('alt="Illustrated HMD ERP') && work.includes('loading="lazy"')],
  ['brand hub link', work.includes('/brand/')],
- ['ethical backlink rules', doc.includes('purchased bulk backlinks') && doc.includes('fake offices') && doc.includes('fabricated testimonials')),
- ['social rollout', doc.includes('LinkedIn company page') && doc.includes('GitHub organization/profile') && doc.includes('YouTube')),
+ ['ethical backlink rules', doc.includes('purchased bulk backlinks') && doc.includes('fake offices') && doc.includes('fabricated testimonials')],
+ ['social rollout', doc.includes('LinkedIn company page') && doc.includes('GitHub organization/profile') && doc.includes('YouTube')],
  ['visual truthfulness', doc.includes('not fabricated screenshots') && doc.includes('no confidential customer data')]
 ];
 for (const [name,pass] of checks) if (!pass) errors.push(`Wave 5 expectation failed: ${name}`);
