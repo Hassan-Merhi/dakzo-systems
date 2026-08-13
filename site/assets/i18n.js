@@ -29,6 +29,16 @@ const STRINGS = {
     footerDescription: 'We design and build custom software, applications, websites, business systems, logistics technology, tracking platforms, and automation.',
     footerLegal: '© {year} Dakzo Systems. A Dakik LLC Company.',
     footerTagline: 'Custom software built around real operations.',
+    formName: 'Your name',
+    formCompany: 'Company',
+    formEmail: 'Email',
+    formProjectType: 'What are you building?',
+    formTimeline: 'Target timeline',
+    formBudget: 'Budget range',
+    formBudgetHint: 'A range helps scope the right approach; it does not lock the project.',
+    formDetails: 'What needs to work better?',
+    formDetailsPlaceholder: 'Describe the workflow, problem, users, or outcome you need.',
+    nextStepsLabel: 'What happens next',
     createBrief: 'Create project brief',
     copyBrief: 'Copy brief',
     copied: 'Copied',
@@ -63,6 +73,16 @@ const STRINGS = {
     footerDescription: 'Nous concevons et développons des logiciels sur mesure, des applications, des sites web, des systèmes métier, des technologies logistiques, des plateformes de suivi et des automatisations.',
     footerLegal: '© {year} Dakzo Systems. Une société de Dakik LLC.',
     footerTagline: 'Des logiciels sur mesure conçus autour des opérations réelles.',
+    formName: 'Votre nom',
+    formCompany: 'Entreprise',
+    formEmail: 'E-mail',
+    formProjectType: 'Que souhaitez-vous créer ?',
+    formTimeline: 'Délai cible',
+    formBudget: 'Fourchette de budget',
+    formBudgetHint: 'Une fourchette nous aide à définir la bonne approche sans vous engager sur un budget définitif.',
+    formDetails: 'Qu’est-ce qui doit mieux fonctionner ?',
+    formDetailsPlaceholder: 'Décrivez le flux de travail, le problème, les utilisateurs ou le résultat attendu.',
+    nextStepsLabel: 'Étapes suivantes',
     createBrief: 'Créer le brief du projet',
     copyBrief: 'Copier le brief',
     copied: 'Copié',
@@ -97,6 +117,16 @@ const STRINGS = {
     footerDescription: 'نصمم ونبني برمجيات مخصصة وتطبيقات ومواقع إلكترونية وأنظمة أعمال وتقنيات لوجستية ومنصات تتبع وحلول أتمتة.',
     footerLegal: '© {year} Dakzo Systems. إحدى شركات Dakik LLC.',
     footerTagline: 'برمجيات مخصصة مبنية حول العمليات الفعلية.',
+    formName: 'الاسم',
+    formCompany: 'الشركة',
+    formEmail: 'البريد الإلكتروني',
+    formProjectType: 'ما الذي تريد بناءه؟',
+    formTimeline: 'الجدول الزمني المستهدف',
+    formBudget: 'نطاق الميزانية',
+    formBudgetHint: 'يساعدنا نطاق الميزانية على تحديد النهج المناسب من دون إلزامك بميزانية نهائية.',
+    formDetails: 'ما الذي يحتاج إلى العمل بشكل أفضل؟',
+    formDetailsPlaceholder: 'صف سير العمل أو المشكلة أو المستخدمين أو النتيجة التي تحتاج إليها.',
+    nextStepsLabel: 'ما الذي يحدث بعد ذلك',
     createBrief: 'إنشاء موجز المشروع',
     copyBrief: 'نسخ الموجز',
     copied: 'تم النسخ',
@@ -131,6 +161,16 @@ const STRINGS = {
     footerDescription: 'Diseñamos y desarrollamos software a medida, aplicaciones, sitios web, sistemas empresariales, tecnología logística, plataformas de seguimiento y automatización.',
     footerLegal: '© {year} Dakzo Systems. Una empresa de Dakik LLC.',
     footerTagline: 'Software a medida creado alrededor de operaciones reales.',
+    formName: 'Tu nombre',
+    formCompany: 'Empresa',
+    formEmail: 'Correo electrónico',
+    formProjectType: '¿Qué estás creando?',
+    formTimeline: 'Plazo objetivo',
+    formBudget: 'Rango de presupuesto',
+    formBudgetHint: 'Un rango nos ayuda a definir el enfoque adecuado sin fijar todavía el presupuesto final.',
+    formDetails: '¿Qué necesita funcionar mejor?',
+    formDetailsPlaceholder: 'Describe el flujo de trabajo, el problema, los usuarios o el resultado que necesitas.',
+    nextStepsLabel: 'Qué sucede después',
     createBrief: 'Crear resumen del proyecto',
     copyBrief: 'Copiar resumen',
     copied: 'Copiado',
@@ -190,8 +230,15 @@ function setText(selector, value) {
 }
 
 function setNavText(href, value) {
-  document.querySelectorAll(`[data-nav] a[href="${href}"], .site-footer a[href="${href}"]`).forEach((node) => {
+  document.querySelectorAll(`[data-nav] a[href="${href}"]`).forEach((node) => {
     node.textContent = value;
+  });
+}
+
+function setFooterLinks(column, values) {
+  const links = column?.querySelectorAll('a') || [];
+  values.forEach((value, index) => {
+    if (links[index]) links[index].textContent = value;
   });
 }
 
@@ -244,21 +291,32 @@ function translateSharedUi(language) {
   setNavText('/work/', strings.work);
   setNavText('/about/', strings.about);
   setNavText('/insights/', strings.insights);
-  document.querySelectorAll('a.nav-cta, .site-footer a[href="/contact/"]').forEach((node) => {
+  document.querySelectorAll('a.nav-cta').forEach((node) => {
     node.textContent = strings.startProject;
   });
 
-  setText('.site-footer .footer-col h2:nth-of-type(1)', strings.company);
-  const footerHeadings = document.querySelectorAll('.site-footer .footer-col h2');
-  if (footerHeadings[0]) footerHeadings[0].textContent = strings.company;
-  if (footerHeadings[1]) footerHeadings[1].textContent = strings.build;
-  if (footerHeadings[2]) footerHeadings[2].textContent = strings.selectedSystems;
+  const footerColumns = document.querySelectorAll('.site-footer .footer-col');
+  if (footerColumns[0]) footerColumns[0].querySelector('h2').textContent = strings.company;
+  if (footerColumns[1]) footerColumns[1].querySelector('h2').textContent = strings.build;
+  if (footerColumns[2]) footerColumns[2].querySelector('h2').textContent = strings.selectedSystems;
+  setFooterLinks(footerColumns[0], [strings.about, strings.work, strings.insights]);
+  setFooterLinks(footerColumns[1], [strings.services, strings.solutions, strings.startProject]);
   setText('.site-footer .footer-brand > p', strings.footerDescription);
 
   const footerBottom = document.querySelectorAll('.site-footer .footer-bottom > span');
   if (footerBottom[0]) footerBottom[0].textContent = interpolate(strings.footerLegal, { year: new Date().getFullYear() });
   if (footerBottom[1]) footerBottom[1].textContent = strings.footerTagline;
 
+  setText('[data-project-form] label[for="name"]', strings.formName);
+  setText('[data-project-form] label[for="company"]', strings.formCompany);
+  setText('[data-project-form] label[for="email"]', strings.formEmail);
+  setText('[data-project-form] label[for="projectType"]', strings.formProjectType);
+  setText('[data-project-form] label[for="timeline"]', strings.formTimeline);
+  setText('[data-project-form] label[for="budget"]', strings.formBudget);
+  setText('[data-project-form] label[for="details"]', strings.formDetails);
+  setText('[data-project-form] .field small', strings.formBudgetHint);
+  document.querySelector('[data-project-form] textarea[name="details"]')?.setAttribute('placeholder', strings.formDetailsPlaceholder);
+  document.querySelector('.conversion-aside')?.setAttribute('aria-label', strings.nextStepsLabel);
   setText('[data-project-form] button[type="submit"]', strings.createBrief);
   setText('[data-copy-brief]', strings.copyBrief);
   const status = document.querySelector('[data-inquiry-status]');
