@@ -1,5 +1,8 @@
 import { renderAdminPage } from './admin-page.js';
 import { handleAdminApi, adminHeaders, secureJson } from './cms-api.js';
+import { handlePublishingApi } from './publishing-api.js';
+import { handlePublicCms, renderPreviewResponse } from './public-cms.js';
+import { injectPhase7Admin } from './admin-phase7.js';
 
 const encoder = new TextEncoder();
 
@@ -12,26 +15,78 @@ export default {
       const auth = await authenticateAccess(request, env);
       if (!auth.ok) return secureJson({ error: auth.error }, auth.status);
 
+      const previewMatch = url.pathname.match(/^\/admin\/preview\/(page|project|article)\/([^/]+)$/);
+      if (previewMatch && request.method === 'GET') {
+        const preview = await renderPreviewResponse(env, previewMatch[1], decodeURIComponent(previewMatch[2]), url.origin);
+        return preview || secureJson({ error: 'Draft preview not found.' }, 404);
+      }
+
       if (url.pathname.startsWith('/api/admin/')) {
         if (isMutation(request.method) && !isSameOriginMutation(request, url)) {
           return secureJson({ error: 'Cross-origin admin mutations are not allowed.' }, 403);
         }
-        return handleAdminApi(request, env, auth, url);
+
+        const archiveMatch = request.method === 'DELETE' ? url.pathname.match(/^\/api\/admin\/(projects|articles)\/([^/]+)$/) : null;
+        if (archiveMatch) {
+          const entityType = archiveMatch[1] === 'projects' ? 'project' : 'article';
+          const entityId = decodeURIComponent(archiveMatch[2]);
+          const unpublishUrl = new URL(`/api/admin/unpublish/${entityType}/${encodeURIComponent(entityId)}`, url.origin);
+          const unpublishRequest = new Request(unpublishUrl, { method: 'POST', headers: { origin: url.origin, 'content-type': 'application/json' }, body: '{}' });
+          const unpublishResponse = await handlePublishingApi(unpublishRequest, env, auth, unpublishUrl);
+          if (unpublishResponse && !unpublishResponse.ok) return unpublishResponse;
+        }
+
+        const publishingResponse = await handlePublishingApi(request, env, auth, url);
+        if (publishingResponse) return publishingResponse;
+        const cmsRequest = await forceDraftContentSave(request, url);
+        return handleAdminApi(cmsRequest, env, auth, url);
       }
 
       if (url.pathname === '/admin/' || url.pathname === '/admin/index.html') {
-        return new Response(renderAdminPage({
+        const response = new Response(renderAdminPage({
           email: auth.email,
           databaseReady: Boolean(env.CMS_DB),
           mediaReady: Boolean(env.MEDIA_BUCKET)
         }), { headers: adminHeaders('text/html; charset=utf-8') });
+        return injectPhase7Admin(response);
       }
       return secureJson({ error: 'Not found' }, 404);
     }
 
+    const tombstone = await unpublishedCmsTombstone(env, url.pathname);
+    if (tombstone) return tombstone;
+    const cmsResponse = await handlePublicCms(request, env, url);
+    if (cmsResponse) return cmsResponse;
     return env.ASSETS.fetch(request);
   }
 };
+
+async function unpublishedCmsTombstone(env, pathname) {
+  if (!env.CMS_DB) return null;
+  const normalized = normalizePublicPath(pathname);
+  const row = await env.CMS_DB.prepare('SELECT is_live FROM cms_publications WHERE live_path=?1 LIMIT 1').bind(normalized).first();
+  if (!row || row.is_live) return null;
+  return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Content unavailable | Dakzo Systems</title></head><body><main><h1>Content unavailable</h1><p>This Dakzo Systems content is not currently published.</p><p><a href="/">Return to Dakzo Systems</a></p></main></body></html>', {
+    status: 404,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow, noarchive', 'x-content-type-options': 'nosniff' }
+  });
+}
+
+async function forceDraftContentSave(request, url) {
+  if (request.method !== 'POST' && request.method !== 'PATCH') return request;
+  if (!/^\/api\/admin\/(?:pages|projects|articles)(?:\/[^/]+)?$/.test(url.pathname)) return request;
+  if (!String(request.headers.get('content-type') || '').includes('application/json')) return request;
+  try {
+    const body = await request.clone().json();
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return request;
+    body.status = 'draft';
+    const headers = new Headers(request.headers);
+    headers.set('content-type', 'application/json');
+    return new Request(request, { body: JSON.stringify(body), headers });
+  } catch {
+    return request;
+  }
+}
 
 async function authenticateAccess(request, env) {
   if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return { ok: false, status: 503, error: 'Admin authentication is not configured.' };
@@ -77,6 +132,11 @@ function base64UrlBytes(value) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
   const binary = atob(normalized);
   return Uint8Array.from(binary, char => char.charCodeAt(0));
+}
+function normalizePublicPath(value) {
+  const path = String(value || '/').split('?')[0].split('#')[0];
+  if (path === '/') return '/';
+  return `/${path.replace(/^\/+|\/+$/g, '')}/`;
 }
 function isMutation(method) { return method === 'POST' || method === 'PATCH' || method === 'DELETE'; }
 function isSameOriginMutation(request, url) { return request.headers.get('origin') === url.origin; }

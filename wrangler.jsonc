@@ -7,7 +7,18 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/admin*", "/api/admin/*"]
+    "run_worker_first": [
+      "/admin*",
+      "/api/admin/*",
+      "/cms-media/*",
+      "/",
+      "/about/*",
+      "/services/*",
+      "/solutions/*",
+      "/contact/*",
+      "/work/*",
+      "/insights/*"
+    ]
   },
   "observability": {
     "enabled": true
