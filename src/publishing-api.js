@@ -2,6 +2,13 @@ import { livePathFor, loadDraftSnapshot } from './public-cms.js';
 import { secureJson } from './cms-api.js';
 
 const ENTITY_TYPES = new Set(['page', 'project', 'article']);
+const PAGE_PATHS = new Map([
+  ['home', '/'],
+  ['about', '/about/'],
+  ['services', '/services/'],
+  ['solutions', '/solutions/'],
+  ['contact', '/contact/']
+]);
 
 export async function handlePublishingApi(request, env, auth, url) {
   if (!url.pathname.startsWith('/api/admin/')) return null;
@@ -46,17 +53,17 @@ async function listRevisions(env, url) {
   `).bind(entityType, entityId).all();
   const publication = await env.CMS_DB.prepare(`
     SELECT live_path, version, published_by, published_at
-    FROM cms_publications WHERE entity_type=?1 AND entity_id=?2
+    FROM cms_publications WHERE entity_type=?1 AND entity_id=?2 AND is_live=1
   `).bind(entityType, entityId).first();
   return secureJson({ revisions: result.results || [], publication: publication || null });
 }
 
 async function getPublication(env, entityType, entityId) {
-  const publication = await env.CMS_DB.prepare(`
-    SELECT entity_type, entity_id, live_path, version, published_by, published_at
+  const row = await env.CMS_DB.prepare(`
+    SELECT entity_type, entity_id, live_path, version, is_live, published_by, published_at
     FROM cms_publications WHERE entity_type=?1 AND entity_id=?2
   `).bind(entityType, entityId).first();
-  return secureJson({ publication: publication || null });
+  return secureJson({ publication: row?.is_live ? row : null, tombstoned: Boolean(row && !row.is_live) });
 }
 
 async function publishEntity(env, actorEmail, entityType, entityId) {
@@ -66,11 +73,18 @@ async function publishEntity(env, actorEmail, entityType, entityId) {
 
   const livePath = livePathFor(entityType, snapshot);
   if (!livePath) return secureJson({ error: 'Unable to determine a public path for this content.' }, 400);
+  if (entityType === 'page') {
+    const expectedPath = PAGE_PATHS.get(snapshot.slug);
+    if (!expectedPath || livePath !== expectedPath) {
+      return secureJson({ error: `Core page ${snapshot.slug} must keep its canonical path ${expectedPath || ''}.` }, 409);
+    }
+  }
+
   const collision = await env.CMS_DB.prepare(`
     SELECT entity_type, entity_id FROM cms_publications
     WHERE live_path=?1 AND NOT (entity_type=?2 AND entity_id=?3) LIMIT 1
   `).bind(livePath, entityType, entityId).first();
-  if (collision) return secureJson({ error: 'That live URL is already used by another published CMS record.' }, 409);
+  if (collision) return secureJson({ error: 'That live URL is already reserved by another CMS record.' }, 409);
 
   const currentPublication = await env.CMS_DB.prepare(`
     SELECT version FROM cms_publications WHERE entity_type=?1 AND entity_id=?2
@@ -82,12 +96,13 @@ async function publishEntity(env, actorEmail, entityType, entityId) {
   await env.CMS_DB.batch([
     revisionStatement(env, entityType, entityId, publishedSnapshot, 'publish', actorEmail),
     env.CMS_DB.prepare(`
-      INSERT INTO cms_publications(entity_type,entity_id,live_path,snapshot_json,version,published_by,published_at)
-      VALUES(?1,?2,?3,?4,?5,?6,?7)
+      INSERT INTO cms_publications(entity_type,entity_id,live_path,snapshot_json,version,is_live,published_by,published_at)
+      VALUES(?1,?2,?3,?4,?5,1,?6,?7)
       ON CONFLICT(entity_type,entity_id) DO UPDATE SET
         live_path=excluded.live_path,
         snapshot_json=excluded.snapshot_json,
         version=excluded.version,
+        is_live=1,
         published_by=excluded.published_by,
         published_at=excluded.published_at
     `).bind(entityType, entityId, livePath, JSON.stringify(publishedSnapshot), version, actorEmail, now),
@@ -101,19 +116,32 @@ async function publishEntity(env, actorEmail, entityType, entityId) {
 async function unpublishEntity(env, actorEmail, entityType, entityId) {
   const snapshot = await loadDraftSnapshot(env, entityType, entityId);
   if (!snapshot) return secureJson({ error: 'Content record not found.' }, 404);
-  const publication = await env.CMS_DB.prepare(`
-    SELECT live_path, version FROM cms_publications WHERE entity_type=?1 AND entity_id=?2
+  const current = await env.CMS_DB.prepare(`
+    SELECT live_path, version, is_live, published_by, published_at
+    FROM cms_publications WHERE entity_type=?1 AND entity_id=?2
   `).bind(entityType, entityId).first();
-  if (!publication) return secureJson({ ok: true, publication: null });
 
+  const livePath = current?.live_path || livePathFor(entityType, snapshot);
+  if (!livePath) return secureJson({ error: 'Unable to determine the public path to unpublish.' }, 400);
+  const version = Number(current?.version || 1);
   const now = new Date().toISOString();
+
   await env.CMS_DB.batch([
     revisionStatement(env, entityType, entityId, snapshot, 'unpublish', actorEmail),
-    env.CMS_DB.prepare('DELETE FROM cms_publications WHERE entity_type=?1 AND entity_id=?2').bind(entityType, entityId),
+    env.CMS_DB.prepare(`
+      INSERT INTO cms_publications(entity_type,entity_id,live_path,snapshot_json,version,is_live,published_by,published_at)
+      VALUES(?1,?2,?3,?4,?5,0,?6,?7)
+      ON CONFLICT(entity_type,entity_id) DO UPDATE SET
+        live_path=excluded.live_path,
+        snapshot_json=excluded.snapshot_json,
+        is_live=0,
+        published_by=excluded.published_by,
+        published_at=excluded.published_at
+    `).bind(entityType, entityId, livePath, JSON.stringify(snapshot), version, actorEmail, now),
     statusStatement(env, entityType, entityId, 'draft', null, now),
-    activityStatement(env, actorEmail, `${entityType}.unpublish`, entityType, entityId, { livePath: publication.live_path, version: publication.version })
+    activityStatement(env, actorEmail, `${entityType}.unpublish`, entityType, entityId, { livePath, version })
   ]);
-  return secureJson({ ok: true, publication: null });
+  return secureJson({ ok: true, publication: null, tombstoned: true, live_path: livePath });
 }
 
 async function restoreRevision(env, actorEmail, revisionId) {
