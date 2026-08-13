@@ -53,11 +53,24 @@ export default {
       return secureJson({ error: 'Not found' }, 404);
     }
 
+    const tombstone = await unpublishedCmsTombstone(env, url.pathname);
+    if (tombstone) return tombstone;
     const cmsResponse = await handlePublicCms(request, env, url);
     if (cmsResponse) return cmsResponse;
     return env.ASSETS.fetch(request);
   }
 };
+
+async function unpublishedCmsTombstone(env, pathname) {
+  if (!env.CMS_DB) return null;
+  const normalized = normalizePublicPath(pathname);
+  const row = await env.CMS_DB.prepare('SELECT is_live FROM cms_publications WHERE live_path=?1 LIMIT 1').bind(normalized).first();
+  if (!row || row.is_live) return null;
+  return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Content unavailable | Dakzo Systems</title></head><body><main><h1>Content unavailable</h1><p>This Dakzo Systems content is not currently published.</p><p><a href="/">Return to Dakzo Systems</a></p></main></body></html>', {
+    status: 404,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow, noarchive', 'x-content-type-options': 'nosniff' }
+  });
+}
 
 async function forceDraftContentSave(request, url) {
   if (request.method !== 'POST' && request.method !== 'PATCH') return request;
@@ -119,6 +132,11 @@ function base64UrlBytes(value) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
   const binary = atob(normalized);
   return Uint8Array.from(binary, char => char.charCodeAt(0));
+}
+function normalizePublicPath(value) {
+  const path = String(value || '/').split('?')[0].split('#')[0];
+  if (path === '/') return '/';
+  return `/${path.replace(/^\/+|\/+$/g, '')}/`;
 }
 function isMutation(method) { return method === 'POST' || method === 'PATCH' || method === 'DELETE'; }
 function isSameOriginMutation(request, url) { return request.headers.get('origin') === url.origin; }
