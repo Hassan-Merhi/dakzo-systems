@@ -20,6 +20,19 @@
       "/insights/*"
     ]
   },
+  "d1_databases": [
+    {
+      "binding": "CMS_DB",
+      "database_name": "dakzo-cms",
+      "database_id": "aaef152e-bcf5-4cf5-a60c-653d6fbd75e3"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "dakzo-media"
+    }
+  ],
   "observability": {
     "enabled": true
   }
