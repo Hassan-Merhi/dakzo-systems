@@ -1,3 +1,9 @@
+void import('/assets/i18n.js')
+  .then(({ initI18n }) => initI18n())
+  .catch(() => undefined);
+
+const translate = (key, fallback) => window.DakzoI18n?.t(key) || fallback;
+
 // Keep the primary navigation CTA readable against its dark pill background.
 document.querySelectorAll('.nav a.nav-cta').forEach((link) => {
   if (link instanceof HTMLAnchorElement) link.style.color = '#ffffff';
@@ -10,12 +16,14 @@ if (toggle && nav) {
   toggle.addEventListener('click', () => {
     const open = nav.classList.toggle('open');
     toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', translate(open ? 'closeNav' : 'openNav', open ? 'Close navigation' : 'Open navigation'));
   });
 
   nav.addEventListener('click', (event) => {
     if (event.target instanceof HTMLAnchorElement && nav.classList.contains('open')) {
       nav.classList.remove('open');
       toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', translate('openNav', 'Open navigation'));
     }
   });
 
@@ -23,6 +31,7 @@ if (toggle && nav) {
     if (event.key === 'Escape' && nav.classList.contains('open')) {
       nav.classList.remove('open');
       toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', translate('openNav', 'Open navigation'));
       toggle.focus();
     }
   });
@@ -105,18 +114,19 @@ const inquiryForm = document.querySelector('[data-project-form]');
 if (inquiryForm instanceof HTMLFormElement) {
   const output = document.querySelector('[data-project-summary]');
   const copyButton = document.querySelector('[data-copy-brief]');
+  const status = document.querySelector('[data-inquiry-status]');
   const buildBrief = () => {
     const data = new FormData(inquiryForm);
     return [
-      'Dakzo Systems — Project Inquiry',
-      `Name: ${data.get('name') || ''}`,
-      `Company: ${data.get('company') || ''}`,
-      `Email: ${data.get('email') || ''}`,
-      `Project type: ${data.get('projectType') || ''}`,
-      `Timeline: ${data.get('timeline') || ''}`,
-      `Budget: ${data.get('budget') || ''}`,
+      translate('briefTitle', 'Dakzo Systems — Project Inquiry'),
+      `${translate('briefName', 'Name')}: ${data.get('name') || ''}`,
+      `${translate('briefCompany', 'Company')}: ${data.get('company') || ''}`,
+      `${translate('briefEmail', 'Email')}: ${data.get('email') || ''}`,
+      `${translate('briefProjectType', 'Project type')}: ${data.get('projectType') || ''}`,
+      `${translate('briefTimeline', 'Timeline')}: ${data.get('timeline') || ''}`,
+      `${translate('briefBudget', 'Budget')}: ${data.get('budget') || ''}`,
       '',
-      'What needs to work better:',
+      translate('briefDetails', 'What needs to work better:'),
       String(data.get('details') || '')
     ].join('\n');
   };
@@ -128,11 +138,26 @@ if (inquiryForm instanceof HTMLFormElement) {
       output.textContent = brief;
       output.hidden = false;
     }
-    if (copyButton instanceof HTMLButtonElement) copyButton.hidden = false;
-    document.querySelector('[data-inquiry-status]')?.replaceChildren(document.createTextNode('Project brief ready. Copy it below and send it through your preferred Dakzo contact channel.'));
+    if (copyButton instanceof HTMLButtonElement) {
+      copyButton.hidden = false;
+      copyButton.dataset.copied = 'false';
+      copyButton.textContent = translate('copyBrief', 'Copy brief');
+    }
+    if (status) {
+      status.dataset.ready = 'true';
+      status.textContent = translate('inquiryReady', 'Project brief ready. Copy it below and send it through your preferred Dakzo contact channel.');
+    }
   });
   copyButton?.addEventListener('click', async () => {
     await navigator.clipboard.writeText(buildBrief());
-    copyButton.textContent = 'Copied';
+    copyButton.dataset.copied = 'true';
+    copyButton.textContent = translate('copied', 'Copied');
+  });
+  window.addEventListener('dakzo:languagechange', () => {
+    if (status?.dataset.ready === 'true') status.textContent = translate('inquiryReady', 'Project brief ready. Copy it below and send it through your preferred Dakzo contact channel.');
+    if (copyButton instanceof HTMLButtonElement && !copyButton.hidden) {
+      copyButton.textContent = copyButton.dataset.copied === 'true' ? translate('copied', 'Copied') : translate('copyBrief', 'Copy brief');
+    }
+    if (output && !output.hidden) output.textContent = buildBrief();
   });
 }

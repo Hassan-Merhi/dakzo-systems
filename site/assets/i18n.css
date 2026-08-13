@@ -1,0 +1,49 @@
+.language-picker {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.language-picker select {
+  min-height: 40px;
+  max-width: 150px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+html[dir="rtl"] .language-picker select {
+  padding: 0 12px 0 34px;
+}
+
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+html[dir="rtl"] .card-link::after {
+  content: "↖";
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+html[dir="rtl"] .work-card .card-link {
+  left: auto;
+  right: 30px;
+}
+
+@media (max-width: 980px) {
+  .language-picker {
+    width: 100%;
+    padding: 8px 10px 4px;
+  }
+
+  .language-picker select {
+    width: 100%;
+    max-width: none;
+  }
+}
