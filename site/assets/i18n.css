@@ -2,11 +2,13 @@
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .language-picker select {
-  min-height: 40px;
-  max-width: 150px;
+  min-width: 148px;
+  min-height: 44px;
+  max-width: 180px;
   padding: 0 34px 0 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -17,12 +19,65 @@
   cursor: pointer;
 }
 
+/* The translated desktop navigation needs more horizontal room than the original English-only header. */
+.site-header .container {
+  width: min(calc(100% - 48px), 1680px);
+}
+
+.header-row {
+  gap: clamp(16px, 2vw, 32px);
+}
+
+.nav {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+  gap: clamp(12px, 1.35vw, 24px);
+}
+
+.nav > a,
+.nav-cta,
+.theme-control,
+.language-picker {
+  white-space: nowrap;
+}
+
+html[data-locale="fr"] .hero h1,
+html[data-locale="es"] .hero h1 {
+  font-size: clamp(3rem, 6vw, 6.2rem);
+  line-height: 0.98;
+}
+
 html[dir="rtl"] .language-picker select {
   padding: 0 12px 0 34px;
 }
 
 html[dir="rtl"] body {
   text-align: right;
+}
+
+html[dir="rtl"] .hero h1,
+html[dir="rtl"] .page-hero h1,
+html[dir="rtl"] .section-head h2,
+html[dir="rtl"] .work-card h3,
+html[dir="rtl"] .cta-panel h2 {
+  letter-spacing: 0;
+}
+
+html[data-locale="ar"] .hero h1 {
+  font-size: clamp(3rem, 5.6vw, 5.8rem);
+  line-height: 1.08;
+}
+
+html[dir="rtl"] .eyebrow,
+html[dir="rtl"] .kicker,
+html[dir="rtl"] .card-number,
+html[dir="rtl"] .system-top,
+html[dir="rtl"] .footer-col h2,
+html[dir="rtl"] .brand-copy small,
+html[dir="rtl"] .theme-control-label {
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 html[dir="rtl"] .card-link::after {
@@ -36,14 +91,126 @@ html[dir="rtl"] .work-card .card-link {
   right: 30px;
 }
 
-@media (max-width: 980px) {
+html[dir="rtl"] .capability-item:nth-child(odd) {
+  padding-left: 24px;
+  padding-right: 0;
+}
+
+html[dir="rtl"] .capability-item:nth-child(even) {
+  padding-left: 0;
+  padding-right: 24px;
+  border-left: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+html[dir="rtl"] code,
+html[dir="rtl"] .attribution-code,
+html[dir="rtl"] .brief-output {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+@media (max-width: 1320px) and (min-width: 1181px) {
+  .nav {
+    gap: 12px;
+  }
+
+  .theme-control {
+    margin-inline: 0;
+    padding-inline: 9px;
+  }
+
+  .theme-control-label {
+    display: none;
+  }
+
+  .language-picker select {
+    min-width: 132px;
+    max-width: 145px;
+  }
+}
+
+/* Switch to the menu before translated labels are forced to wrap on laptops/tablets. */
+@media (max-width: 1180px) {
+  .site-header .container {
+    width: min(calc(100% - 40px), var(--max));
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .nav {
+    display: none;
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 72px;
+    padding: 18px;
+    border: 1px solid var(--theme-line, var(--line));
+    border-radius: 18px;
+    background: var(--theme-surface, var(--white));
+    box-shadow: var(--theme-soft-shadow, var(--shadow));
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    max-height: calc(100dvh - 92px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .nav.open {
+    display: flex;
+  }
+
+  .nav a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 12px 10px;
+    white-space: normal;
+  }
+
+  .nav-cta {
+    margin-top: 6px;
+  }
+
+  .theme-control {
+    order: -1;
+    width: 100%;
+    justify-content: space-between;
+    margin: 0 0 7px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    min-height: 48px;
+  }
+
+  .theme-control-label {
+    display: inline;
+  }
+
   .language-picker {
     width: 100%;
-    padding: 8px 10px 4px;
+    padding: 8px 0 4px;
   }
 
   .language-picker select {
     width: 100%;
     max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  html[data-locale="fr"] .hero h1,
+  html[data-locale="es"] .hero h1,
+  html[data-locale="ar"] .hero h1 {
+    font-size: clamp(2.7rem, 14vw, 4.6rem);
+  }
+
+  html[dir="rtl"] .capability-item:nth-child(odd),
+  html[dir="rtl"] .capability-item:nth-child(even) {
+    padding-inline: 0;
+    border-right: 0;
   }
 }

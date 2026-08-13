@@ -1,5 +1,14 @@
-void import('/assets/i18n.js')
-  .then(({ initI18n }) => initI18n())
+void Promise.all([
+  import('/assets/page-i18n.js'),
+  import('/assets/i18n.js')
+])
+  .then(([{ initPageI18n }, { initI18n }]) => {
+    // Capture the original English page before shared controls are translated so switching
+    // between locales always has a stable source of truth.
+    const pageI18n = initPageI18n({ language: 'en-US' });
+    const i18n = initI18n();
+    void pageI18n.setLanguage(i18n.language);
+  })
   .catch(() => undefined);
 
 const translate = (key, fallback) => window.DakzoI18n?.t(key) || fallback;
