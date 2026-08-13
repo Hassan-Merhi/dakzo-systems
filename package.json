@@ -1,14 +1,14 @@
 {
   "name": "dakzo-systems",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "description": "Official website for Dakzo Systems, a Dakik LLC company.",
   "scripts": {
     "lint": "node scripts/lint.mjs",
-    "check:worker": "node --check src/worker.js && node --check src/cms-api.js && node --check src/admin-page.js && node --check src/public-cms.js && node --check src/publishing-api.js && node --check src/admin-phase7.js",
+    "check:worker": "node --check src/worker.js && node --check src/cms-api.js && node --check src/admin-page.js && node --check src/public-cms.js && node --check src/publishing-api.js && node --check src/admin-phase7.js && node --check src/production-readiness.js && node --check src/admin-phase8.js",
     "test:theme": "node scripts/theme-test.mjs",
-    "test": "node scripts/test.mjs && node scripts/wave5-test.mjs && node scripts/cms-test.mjs && npm run test:theme && node scripts/i18n-test.mjs && node scripts/cms-phase7-test.mjs",
+    "test": "node scripts/test.mjs && node scripts/wave5-test.mjs && node scripts/cms-test.mjs && npm run test:theme && node scripts/i18n-test.mjs && node scripts/cms-phase7-test.mjs && node scripts/cms-phase8-test.mjs",
     "build": "node scripts/build.mjs",
     "launch:audit": "node scripts/launch-audit.mjs",
     "verify": "npm run lint && npm run check:worker && npm test && npm run build && npm run launch:audit"
