@@ -3,6 +3,8 @@ import { handleAdminApi, adminHeaders, secureJson } from './cms-api.js';
 import { handlePublishingApi } from './publishing-api.js';
 import { handlePublicCms, renderPreviewResponse } from './public-cms.js';
 import { injectPhase7Admin } from './admin-phase7.js';
+import { injectPhase8Admin } from './admin-phase8.js';
+import { handleProductionReadiness } from './production-readiness.js';
 
 const encoder = new TextEncoder();
 
@@ -24,6 +26,10 @@ export default {
       if (url.pathname.startsWith('/api/admin/')) {
         if (isMutation(request.method) && !isSameOriginMutation(request, url)) {
           return secureJson({ error: 'Cross-origin admin mutations are not allowed.' }, 403);
+        }
+
+        if (url.pathname === '/api/admin/production-readiness' && request.method === 'GET') {
+          return handleProductionReadiness(env, auth);
         }
 
         const archiveMatch = request.method === 'DELETE' ? url.pathname.match(/^\/api\/admin\/(projects|articles)\/([^/]+)$/) : null;
@@ -48,7 +54,7 @@ export default {
           databaseReady: Boolean(env.CMS_DB),
           mediaReady: Boolean(env.MEDIA_BUCKET)
         }), { headers: adminHeaders('text/html; charset=utf-8') });
-        return injectPhase7Admin(response);
+        return injectPhase8Admin(await injectPhase7Admin(response));
       }
       return secureJson({ error: 'Not found' }, 404);
     }
