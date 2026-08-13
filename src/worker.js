@@ -5,6 +5,8 @@ import { handlePublicCms, renderPreviewResponse } from './public-cms.js';
 import { injectPhase7Admin } from './admin-phase7.js';
 import { injectPhase8Admin } from './admin-phase8.js';
 import { handleProductionReadiness } from './production-readiness.js';
+import { handlePublicI18n } from './public-i18n.js';
+import { handleAdminI18n } from './admin-i18n.js';
 
 const encoder = new TextEncoder();
 
@@ -31,6 +33,9 @@ export default {
         if (url.pathname === '/api/admin/production-readiness' && request.method === 'GET') {
           return handleProductionReadiness(env, auth);
         }
+
+        const i18nResponse = await handleAdminI18n(request, env, auth, url);
+        if (i18nResponse) return i18nResponse;
 
         const archiveMatch = request.method === 'DELETE' ? url.pathname.match(/^\/api\/admin\/(projects|articles)\/([^/]+)$/) : null;
         if (archiveMatch) {
@@ -59,6 +64,7 @@ export default {
       return secureJson({ error: 'Not found' }, 404);
     }
 
+    if (url.pathname === '/api/i18n' && request.method === 'GET') return handlePublicI18n(env, url);
     const tombstone = await unpublishedCmsTombstone(env, url.pathname);
     if (tombstone) return tombstone;
     const cmsResponse = await handlePublicCms(request, env, url);

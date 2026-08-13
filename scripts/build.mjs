@@ -34,9 +34,7 @@ for (const file of htmlFiles) {
   let html = await readFile(file, 'utf8');
   if (!html.includes('/assets/theme.js')) html = html.replace('</head>', `${themeHead}</head>`);
   if (!html.includes('/assets/theme.css')) throw new Error(`${relative(output, file)} is missing the theme stylesheet.`);
-  if (html.indexOf('/assets/theme.js') > html.indexOf('/assets/theme.css')) {
-    throw new Error(`${relative(output, file)} loads the theme initializer after the theme stylesheet.`);
-  }
+  if (html.indexOf('/assets/theme.js') > html.indexOf('/assets/theme.css')) throw new Error(`${relative(output, file)} loads the theme initializer after the theme stylesheet.`);
   await writeFile(file, html);
 }
 
@@ -48,19 +46,28 @@ const indexStat = await stat(join(output, 'index.html'));
 if (indexStat.size < 1000) throw new Error('Production homepage output is unexpectedly small.');
 if (urls.length < 15) throw new Error('Production sitemap has unexpectedly few routes.');
 
-const requiredProductionFiles = ['404.html', 'health.json', '.well-known/security.txt', 'privacy/index.html'];
+const requiredProductionFiles = ['404.html','health.json','.well-known/security.txt','privacy/index.html','assets/i18n.js','assets/i18n.css','assets/i18n-pages.js','assets/i18n-pages.css'];
 for (const path of requiredProductionFiles) await stat(join(output, path));
 
-const jsBudget = 14 * 1024;
-const cssBudget = 24 * 1024;
+const coreJsBudget = 48 * 1024;
+const localeChunkBudget = 24 * 1024;
+const cssBudget = 40 * 1024;
 const htmlBudget = 16 * 1024;
-const jsFiles = ['site.js', 'theme.js'];
-let jsSize = 0;
-for (const file of jsFiles) jsSize += (await stat(join(output, 'assets', file))).size;
-const cssFiles = ['styles.css', 'wave3.css', 'wave5.css', 'theme.css'];
+const coreJsFiles = ['site.js', 'theme.js', 'i18n.js', 'i18n-pages.js'];
+let coreJsSize = 0;
+for (const file of coreJsFiles) coreJsSize += (await stat(join(output, 'assets', file))).size;
+let largestLocaleChunk = 0;
+for (const locale of ['fr','ar','es']) {
+  for (let index = 0; index < 11; index += 1) {
+    const size = (await stat(join(output, 'assets/i18n-pages', locale, `${index}.js`))).size;
+    largestLocaleChunk = Math.max(largestLocaleChunk, size);
+    if (size > localeChunkBudget) throw new Error(`${locale}/${index}.js exceeds ${localeChunkBudget} byte locale chunk budget (${size}).`);
+  }
+}
+const cssFiles = ['styles.css', 'wave3.css', 'wave5.css', 'theme.css', 'i18n.css', 'i18n-pages.css'];
 let cssSize = 0;
 for (const file of cssFiles) cssSize += (await stat(join(output, 'assets', file))).size;
-if (jsSize > jsBudget) throw new Error(`JavaScript exceeds ${jsBudget} byte production budget (${jsSize}).`);
+if (coreJsSize > coreJsBudget) throw new Error(`Core JavaScript exceeds ${coreJsBudget} byte production budget (${coreJsSize}).`);
 if (cssSize > cssBudget) throw new Error(`CSS exceeds ${cssBudget} byte production budget (${cssSize}).`);
 
 for (const file of htmlFiles) {
@@ -68,10 +75,8 @@ for (const file of htmlFiles) {
   const size = Buffer.byteLength(html);
   if (size > htmlBudget) throw new Error(`${relative(output, file)} exceeds ${htmlBudget} byte HTML budget (${size}).`);
   if (!html.includes('name="viewport"')) throw new Error(`${relative(output, file)} is missing a mobile viewport.`);
-  if (!html.includes('/assets/theme.js') || !html.includes('/assets/theme.css')) {
-    throw new Error(`${relative(output, file)} is missing global theme assets.`);
-  }
+  if (!html.includes('/assets/theme.js') || !html.includes('/assets/theme.css')) throw new Error(`${relative(output, file)} is missing global theme assets.`);
   if (/src="https?:\/\//i.test(html)) throw new Error(`${relative(output, file)} contains a third-party executable script.`);
 }
 
-console.log(`Build passed: ${urls.length} crawlable routes and ${htmlFiles.length} themed HTML files generated for ${siteUrl}; JS ${jsSize} B; CSS ${cssSize} B; per-page HTML budget ${htmlBudget} B.`);
+console.log(`Build passed: ${urls.length} crawlable routes and ${htmlFiles.length} themed HTML files generated for ${siteUrl}; core JS ${coreJsSize} B; largest lazy locale chunk ${largestLocaleChunk} B; CSS ${cssSize} B; per-page HTML budget ${htmlBudget} B.`);

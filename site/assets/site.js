@@ -1,5 +1,8 @@
-void import('/assets/i18n.js')
-  .then(({ initI18n }) => initI18n())
+void Promise.all([import('/assets/i18n-pages.js'), import('/assets/i18n.js')])
+  .then(([pageI18n, baseI18n]) => {
+    pageI18n.initPageI18n();
+    return baseI18n.initI18n();
+  })
   .catch(() => undefined);
 
 const translate = (key, fallback) => window.DakzoI18n?.t(key) || fallback;

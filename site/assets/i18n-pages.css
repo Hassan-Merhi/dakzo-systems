@@ -1,0 +1,59 @@
+.language-picker,
+.page-language-picker {
+  border-color: var(--theme-control-line, var(--line));
+  background: var(--theme-control, var(--white));
+  color: var(--theme-text, var(--ink));
+}
+.language-picker-label { font-size: .72rem; font-weight: 800; letter-spacing: .04em; }
+.language-picker select { background: transparent; color: inherit; }
+
+html[dir="rtl"] body { text-align: right; }
+html[dir="rtl"] .skip-link { left: auto; right: 16px; }
+html[dir="rtl"] .header-row,
+html[dir="rtl"] .nav,
+html[dir="rtl"] .hero-actions,
+html[dir="rtl"] .work-tags,
+html[dir="rtl"] .cms-meta,
+html[dir="rtl"] .form-actions { direction: rtl; }
+html[dir="rtl"] .hero-grid,
+html[dir="rtl"] .section-head,
+html[dir="rtl"] .footer-grid,
+html[dir="rtl"] .grid-3,
+html[dir="rtl"] .placeholder-grid,
+html[dir="rtl"] .process,
+html[dir="rtl"] .conversion-grid,
+html[dir="rtl"] .article-list { direction: rtl; }
+html[dir="rtl"] .card,
+html[dir="rtl"] .work-card,
+html[dir="rtl"] .page-hero,
+html[dir="rtl"] .article-card,
+html[dir="rtl"] .article-shell,
+html[dir="rtl"] .resource-card,
+html[dir="rtl"] .channel-card,
+html[dir="rtl"] .inquiry-form,
+html[dir="rtl"] .conversion-aside { text-align: right; }
+html[dir="rtl"] .card-link::after { content: "↖"; margin-left: 0; margin-right: 8px; }
+html[dir="rtl"] .work-card .card-link { left: auto; right: 30px; }
+html[dir="rtl"] .capability-item:nth-child(odd) { padding-right: 0; padding-left: 24px; }
+html[dir="rtl"] .capability-item:nth-child(even) { padding-left: 0; padding-right: 24px; border-left: 0; border-right: 1px solid rgba(255,255,255,.14); }
+html[dir="rtl"] .article-shell ul,
+html[dir="rtl"] .article-shell ol { padding-left: 0; padding-right: 1.4rem; }
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] code,
+html[dir="rtl"] pre,
+html[dir="rtl"] .attribution-code,
+html[dir="rtl"] .spark { direction: ltr; text-align: left; }
+html[dir="rtl"] .system-top { direction: rtl; }
+
+@media (max-width: 980px) {
+  html[dir="rtl"] .nav { left: 20px; right: 20px; }
+  .page-language-picker { margin-inline-start: auto; }
+}
+@media (max-width: 640px) {
+  html[dir="rtl"] .capability-item:nth-child(odd),
+  html[dir="rtl"] .capability-item:nth-child(even) { padding-inline: 0; border-right: 0; }
+  html[dir="rtl"] .work-card .card-link { right: 20px; }
+  .page-language-picker { width: auto; }
+}
