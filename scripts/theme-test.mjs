@@ -49,10 +49,10 @@ const checks = [
   [themeCss.includes('input:-webkit-autofill'), 'dark and light form autofill must preserve theme colors'],
   [themeCss.includes('img[src$="logo-mark.svg"]'), 'brand mark must have theme-safe presentation polish'],
   [themeCss.includes('.portfolio-visual'), 'project and portfolio imagery must have theme-safe framing'],
-  [themeCss.includes('min-width: 44px') && themeCss.includes('min-height: 44px'), 'interactive controls must preserve 44px touch targets'],
+  [/min-width:\s*44px/.test(themeCss) && /min-height:\s*44px/.test(themeCss), 'interactive controls must preserve 44px touch targets'],
   [themeCss.includes('@media (max-width: 1160px)') && themeCss.includes('@media (max-width: 980px)') && themeCss.includes('@media (max-width: 640px)'), 'desktop/laptop, tablet, and mobile responsive polish breakpoints must exist'],
-  [themeCss.includes('max-height: calc(100dvh - 92px)') && themeCss.includes('overflow-y: auto'), 'mobile navigation must stay usable on short viewports'],
-  [themeCss.includes('@media (prefers-reduced-motion: reduce)') && themeCss.includes('transition: none !important'), 'reduced-motion users must not receive decorative theme motion'],
+  [/max-height:\s*calc\(100dvh\s*-\s*92px\)/.test(themeCss) && /overflow-y:\s*auto/.test(themeCss), 'mobile navigation must stay usable on short viewports'],
+  [themeCss.includes('@media (prefers-reduced-motion: reduce)') && /transition:\s*none\s*!important/.test(themeCss), 'reduced-motion users must not receive decorative theme motion'],
   [buildScript.includes('/assets/theme.js') && buildScript.includes('/assets/theme.css'), 'production build must inject theme assets into every HTML page'],
   [buildScript.includes("entry.name.endsWith('.html')"), 'production build must theme all HTML files including the 404 page']
 ];
