@@ -3,9 +3,13 @@
   "name": "dakzo-systems",
   "main": "src/worker.js",
   "compatibility_date": "2026-08-13",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "run_worker_first": ["/admin*", "/api/admin/*"]
+  },
+  "observability": {
+    "enabled": true
   }
 }
