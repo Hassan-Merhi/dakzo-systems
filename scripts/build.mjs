@@ -49,7 +49,7 @@ if (urls.length < 15) throw new Error('Production sitemap has unexpectedly few r
 const requiredProductionFiles = ['404.html','health.json','.well-known/security.txt','privacy/index.html','assets/i18n.js','assets/i18n.css','assets/i18n-pages.js','assets/i18n-pages.css'];
 for (const path of requiredProductionFiles) await stat(join(output, path));
 
-const coreJsBudget = 48 * 1024;
+const jsBudget = 48 * 1024;
 const localeChunkBudget = 24 * 1024;
 const cssBudget = 40 * 1024;
 const htmlBudget = 16 * 1024;
@@ -67,7 +67,7 @@ for (const locale of ['fr','ar','es']) {
 const cssFiles = ['styles.css', 'wave3.css', 'wave5.css', 'theme.css', 'i18n.css', 'i18n-pages.css'];
 let cssSize = 0;
 for (const file of cssFiles) cssSize += (await stat(join(output, 'assets', file))).size;
-if (coreJsSize > coreJsBudget) throw new Error(`Core JavaScript exceeds ${coreJsBudget} byte production budget (${coreJsSize}).`);
+if (coreJsSize > jsBudget) throw new Error(`Core JavaScript exceeds ${jsBudget} byte production budget (${coreJsSize}).`);
 if (cssSize > cssBudget) throw new Error(`CSS exceeds ${cssBudget} byte production budget (${cssSize}).`);
 
 for (const file of htmlFiles) {
