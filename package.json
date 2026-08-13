@@ -1,11 +1,11 @@
 {
   "name": "dakzo-systems",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Official website for Dakzo Systems, a Dakik LLC company.",
   "scripts": {
     "lint": "node scripts/lint.mjs",
-    "test": "node scripts/test.mjs && node scripts/wave5-test.mjs",
+    "test": "node scripts/test.mjs && node scripts/wave5-test.mjs && node scripts/cms-test.mjs",
     "build": "node scripts/build.mjs",
     "launch:audit": "node scripts/launch-audit.mjs",
     "verify": "npm run lint && npm test && npm run build && npm run launch:audit"
