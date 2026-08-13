@@ -25,6 +25,17 @@ export default {
         if (isMutation(request.method) && !isSameOriginMutation(request, url)) {
           return secureJson({ error: 'Cross-origin admin mutations are not allowed.' }, 403);
         }
+
+        const archiveMatch = request.method === 'DELETE' ? url.pathname.match(/^\/api\/admin\/(projects|articles)\/([^/]+)$/) : null;
+        if (archiveMatch) {
+          const entityType = archiveMatch[1] === 'projects' ? 'project' : 'article';
+          const entityId = decodeURIComponent(archiveMatch[2]);
+          const unpublishUrl = new URL(`/api/admin/unpublish/${entityType}/${encodeURIComponent(entityId)}`, url.origin);
+          const unpublishRequest = new Request(unpublishUrl, { method: 'POST', headers: { origin: url.origin, 'content-type': 'application/json' }, body: '{}' });
+          const unpublishResponse = await handlePublishingApi(unpublishRequest, env, auth, unpublishUrl);
+          if (unpublishResponse && !unpublishResponse.ok) return unpublishResponse;
+        }
+
         const publishingResponse = await handlePublishingApi(request, env, auth, url);
         if (publishingResponse) return publishingResponse;
         const cmsRequest = await forceDraftContentSave(request, url);
