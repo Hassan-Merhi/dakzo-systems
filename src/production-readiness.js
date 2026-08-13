@@ -7,7 +7,8 @@ export const REQUIRED_TABLES = [
   'cms_media',
   'cms_revisions',
   'cms_activity',
-  'cms_publications'
+  'cms_publications',
+  'cms_translations'
 ];
 
 export async function handleProductionReadiness(env, auth) {
@@ -87,13 +88,14 @@ export async function handleProductionReadiness(env, auth) {
     ...result,
     checkedAt: new Date().toISOString(),
     authenticatedAdmin: auth.email,
-    requiredMigration: '0004_publications.sql',
+    requiredMigration: '0005_i18n_content.sql',
     bindings,
     schema,
     content,
     media,
     notes: [
       bindings.adminAllowlistConfigured ? 'ADMIN_EMAILS allowlist is configured.' : 'ADMIN_EMAILS is optional but recommended for a single-owner admin.',
+      'The multilingual production floor requires cms_translations and migration 0005 before the production gate can report READY.',
       'No secret values, Access tokens, database identifiers, or R2 object keys are returned by this endpoint.'
     ]
   });
