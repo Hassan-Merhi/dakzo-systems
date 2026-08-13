@@ -1,5 +1,8 @@
 import { renderAdminPage } from './admin-page.js';
 import { handleAdminApi, adminHeaders, secureJson } from './cms-api.js';
+import { handlePublishingApi } from './publishing-api.js';
+import { handlePublicCms, renderPreviewResponse } from './public-cms.js';
+import { injectPhase7Admin } from './admin-phase7.js';
 
 const encoder = new TextEncoder();
 
@@ -12,26 +15,54 @@ export default {
       const auth = await authenticateAccess(request, env);
       if (!auth.ok) return secureJson({ error: auth.error }, auth.status);
 
+      const previewMatch = url.pathname.match(/^\/admin\/preview\/(page|project|article)\/([^/]+)$/);
+      if (previewMatch && request.method === 'GET') {
+        const preview = await renderPreviewResponse(env, previewMatch[1], decodeURIComponent(previewMatch[2]), url.origin);
+        return preview || secureJson({ error: 'Draft preview not found.' }, 404);
+      }
+
       if (url.pathname.startsWith('/api/admin/')) {
         if (isMutation(request.method) && !isSameOriginMutation(request, url)) {
           return secureJson({ error: 'Cross-origin admin mutations are not allowed.' }, 403);
         }
-        return handleAdminApi(request, env, auth, url);
+        const publishingResponse = await handlePublishingApi(request, env, auth, url);
+        if (publishingResponse) return publishingResponse;
+        const cmsRequest = await forceDraftContentSave(request, url);
+        return handleAdminApi(cmsRequest, env, auth, url);
       }
 
       if (url.pathname === '/admin/' || url.pathname === '/admin/index.html') {
-        return new Response(renderAdminPage({
+        const response = new Response(renderAdminPage({
           email: auth.email,
           databaseReady: Boolean(env.CMS_DB),
           mediaReady: Boolean(env.MEDIA_BUCKET)
         }), { headers: adminHeaders('text/html; charset=utf-8') });
+        return injectPhase7Admin(response);
       }
       return secureJson({ error: 'Not found' }, 404);
     }
 
+    const cmsResponse = await handlePublicCms(request, env, url);
+    if (cmsResponse) return cmsResponse;
     return env.ASSETS.fetch(request);
   }
 };
+
+async function forceDraftContentSave(request, url) {
+  if (request.method !== 'POST' && request.method !== 'PATCH') return request;
+  if (!/^\/api\/admin\/(?:pages|projects|articles)(?:\/[^/]+)?$/.test(url.pathname)) return request;
+  if (!String(request.headers.get('content-type') || '').includes('application/json')) return request;
+  try {
+    const body = await request.clone().json();
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return request;
+    body.status = 'draft';
+    const headers = new Headers(request.headers);
+    headers.set('content-type', 'application/json');
+    return new Request(request, { body: JSON.stringify(body), headers });
+  } catch {
+    return request;
+  }
+}
 
 async function authenticateAccess(request, env) {
   if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return { ok: false, status: 503, error: 'Admin authentication is not configured.' };
