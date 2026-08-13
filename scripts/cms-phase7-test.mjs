@@ -14,13 +14,13 @@ const wrangler = await readFile(join(root, 'wrangler.jsonc'), 'utf8');
 for (const token of ['cms_publications', 'snapshot_json', 'live_path', 'version', 'is_live']) {
   if (!migration.includes(token)) errors.push(`Phase 7 migration missing ${token}.`);
 }
-for (const token of ['/api/admin/publish/', '/api/admin/unpublish/', '/api/admin/revisions', '/restore', 'ON CONFLICT(entity_type,entity_id)', "'publish'", "'unpublish'", "'restore'"]) {
+for (const token of ['handlePublishingApi', 'publishEntity', 'unpublishEntity', 'restoreRevision', 'cms_publications', 'ON CONFLICT(entity_type,entity_id)', "'publish'", "'unpublish'", "'restore'"]) {
   if (!publishing.includes(token)) errors.push(`Publishing API missing ${token}.`);
 }
-for (const token of ['forceDraftContentSave', '/admin/preview/', 'handlePublicCms', 'injectPhase7Admin', 'unpublishUrl']) {
+for (const token of ['forceDraftContentSave', 'renderPreviewResponse', 'handlePublicCms', 'injectPhase7Admin', 'unpublishUrl', 'unpublishedCmsTombstone']) {
   if (!worker.includes(token)) errors.push(`Worker Phase 7 contract missing ${token}.`);
 }
-for (const token of ['Preview draft', 'Publish', 'Unpublish', 'Revision history', 'Restore to draft']) {
+for (const token of ['Preview draft', 'Publish', 'Unpublish', 'Revision history', 'Restore to draft', '/api/admin/publish/', '/api/admin/unpublish/', '/api/admin/revisions']) {
   if (!adminPhase7.includes(token)) errors.push(`Admin Phase 7 controls missing ${token}.`);
 }
 for (const token of ['/cms-media/', 'renderCmsDocument', 'index,follow', 'noindex,nofollow,noarchive', 'application/ld+json']) {
